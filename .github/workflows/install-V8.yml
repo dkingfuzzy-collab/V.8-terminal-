@@ -1,0 +1,48 @@
+name: Install V8 source structure
+
+on:
+  push:
+    paths:
+      - "dickson-bot-v8-source-preserve.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install-v8:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Extract V8 source preserving folders
+        run: |
+          test -f dickson-bot-v8-source-preserve.zip
+          unzip -o dickson-bot-v8-source-preserve.zip -d .
+          rm -f dickson-bot-v8-source-preserve.zip
+
+          test -f render.yaml
+          test -f backend/main.py
+          test -f backend/requirements.txt
+          test -d frontend
+
+      - name: Verify Python source
+        run: |
+          python -m compileall -q backend
+
+      - name: Commit V8 structure
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Install Dickson Bot V8 source structure"
+          git push
